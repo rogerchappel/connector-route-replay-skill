@@ -1,0 +1,29 @@
+{
+  "id": "ambiguous-route",
+  "request": {
+    "summary": "Look up a customer project record",
+    "intent": "read",
+    "risk": "low",
+    "keywords": ["customer", "project"]
+  },
+  "candidates": [
+    {
+      "name": "crm.search",
+      "capabilities": ["read", "customer"],
+      "sideEffects": [],
+      "dryRun": false,
+      "evidence": ["Finds customer records"]
+    },
+    {
+      "name": "project.search",
+      "capabilities": ["read", "project"],
+      "sideEffects": [],
+      "dryRun": false,
+      "evidence": ["Finds project records"]
+    }
+  ],
+  "expected": {
+    "selected": "crm.search",
+    "approval": "clarify"
+  }
+}

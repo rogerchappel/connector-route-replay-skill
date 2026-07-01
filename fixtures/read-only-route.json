@@ -1,0 +1,29 @@
+{
+  "id": "read-only-route",
+  "request": {
+    "summary": "Find the latest CRM note for a contact",
+    "intent": "read",
+    "risk": "low",
+    "keywords": ["crm", "contact", "note"]
+  },
+  "candidates": [
+    {
+      "name": "crm.search",
+      "capabilities": ["read", "crm", "contact"],
+      "sideEffects": [],
+      "dryRun": false,
+      "evidence": ["Can search CRM contacts and notes"]
+    },
+    {
+      "name": "project.search",
+      "capabilities": ["read", "project"],
+      "sideEffects": [],
+      "dryRun": false,
+      "evidence": ["Searches project records but not contacts"]
+    }
+  ],
+  "expected": {
+    "selected": "crm.search",
+    "approval": "none"
+  }
+}

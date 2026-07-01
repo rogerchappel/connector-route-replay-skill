@@ -1,0 +1,32 @@
+id: blocked-route
+request:
+  summary: Send a real email notification
+  intent: publish
+  risk: high
+  keywords:
+    - mail
+    - send
+candidates:
+  - name: mail.send.live
+    capabilities:
+      - publish
+      - mail
+      - send
+    sideEffects:
+      - notification-send
+    dryRun: false
+    evidence:
+      - Matches mail send request but is blocked by policy
+  - name: mail.draft
+    capabilities:
+      - write
+      - mail
+      - draft
+    sideEffects:
+      - local-file
+    dryRun: true
+    evidence:
+      - Can prepare a draft without sending
+expected:
+  selected: mail.draft
+  approval: explicit-approval

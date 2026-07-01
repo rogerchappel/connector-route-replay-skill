@@ -1,0 +1,5 @@
+{
+  "blockedTools": ["mail.send.live"],
+  "approvalRequiredIntents": ["write", "delete", "publish"],
+  "dryRunRequiredSideEffects": ["external-write", "notification-send", "destructive-change"]
+}

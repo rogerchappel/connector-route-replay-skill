@@ -1,0 +1,29 @@
+{
+  "id": "write-action-route",
+  "request": {
+    "summary": "Draft and send a CRM update",
+    "intent": "write",
+    "risk": "medium",
+    "keywords": ["crm", "update"]
+  },
+  "candidates": [
+    {
+      "name": "crm.write",
+      "capabilities": ["write", "crm", "update"],
+      "sideEffects": ["external-write"],
+      "dryRun": true,
+      "evidence": ["Matches CRM write intent", "Supports dry-run preview"]
+    },
+    {
+      "name": "notes.local",
+      "capabilities": ["write", "local-note"],
+      "sideEffects": ["local-file"],
+      "dryRun": true,
+      "evidence": ["Can draft locally but cannot update CRM"]
+    }
+  ],
+  "expected": {
+    "selected": "crm.write",
+    "approval": "explicit-approval"
+  }
+}
