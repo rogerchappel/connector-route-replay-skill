@@ -1,0 +1,37 @@
+{
+  "name": "connector-route-replay-skill",
+  "version": "0.1.0",
+  "description": "Replay connector-routing fixtures and explain approval gates without touching live systems.",
+  "type": "module",
+  "bin": {
+    "connector-route-replay": "./bin/connector-route-replay.js"
+  },
+  "scripts": {
+    "check": "node --check bin/connector-route-replay.js && node --check src/index.js",
+    "test": "node --test",
+    "smoke": "node bin/connector-route-replay.js replay fixtures/read-only-route.json --format markdown && node bin/connector-route-replay.js verify fixtures --policy examples/policy.json",
+    "package:smoke": "npm pack --dry-run"
+  },
+  "keywords": [
+    "agent-skill",
+    "connector-routing",
+    "dry-run",
+    "approval-gates"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "docs",
+    "examples",
+    "fixtures",
+    "scripts",
+    "src",
+    "SKILL.md",
+    "README.md",
+    "LICENSE"
+  ]
+}
