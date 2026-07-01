@@ -9,11 +9,11 @@
 
 ## Verification
 
-Run:
+Passed locally on 2026-07-01:
 
 ```sh
-npm run check
-npm test
-npm run smoke
-npm run package:smoke
+npm run check        # pass
+npm test             # pass, 7 tests
+npm run smoke        # pass, replay + fixture verify
+npm run package:smoke # pass, npm pack --dry-run
 ```
