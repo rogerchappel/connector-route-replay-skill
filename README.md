@@ -68,6 +68,7 @@ Fixtures are JSON by default. A small YAML subset is supported for simple scalar
 
 ```sh
 npm run check
+npm run lint
 npm test
 npm run smoke
 npm run package:smoke
