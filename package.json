@@ -11,7 +11,8 @@
     "test": "node --test",
     "smoke": "node bin/connector-route-replay.js replay fixtures/read-only-route.json --format markdown && node bin/connector-route-replay.js verify fixtures --policy examples/policy.json",
     "package:smoke": "npm pack --dry-run",
-    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke",
+    "lint": "npm run check"
   },
   "keywords": [
     "agent-skill",
