@@ -10,6 +10,8 @@ This is a local-first agent skill. It does not call live connectors, read creden
 npm install
 npm test
 npm run smoke
+node bin/connector-route-replay.js --help
+node bin/connector-route-replay.js --version
 node bin/connector-route-replay.js replay fixtures/write-action-route.json --format json
 ```
 
