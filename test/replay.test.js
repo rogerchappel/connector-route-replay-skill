@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import test from "node:test";
 import { loadFixture, loadPolicy, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
 
@@ -42,10 +42,36 @@ test("renders markdown report", () => {
   assert.match(markdown, /Tool: crm.search/);
 });
 
-test("CLI replay emits JSON", () => {
-  const output = execFileSync("node", ["bin/connector-route-replay.js", "replay", "fixtures/write-action-route.json", "--format", "json"], {
+test("CLI executes the documented markdown replay path", () => {
+  const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/read-only-route.json", "--format", "markdown"], {
+    encoding: "utf8"
+  });
+  assert.match(output, /# Connector Route Replay: read-only-route/);
+  assert.match(output, /Tool: crm\.search/);
+});
+
+test("CLI executes the documented JSON replay path", () => {
+  const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/write-action-route.json", "--format", "json"], {
     encoding: "utf8"
   });
   const parsed = JSON.parse(output);
   assert.equal(parsed.selected.name, "crm.write");
+});
+
+test("CLI rejects an unsupported replay format", () => {
+  const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/read-only-route.json", "--format", "xml"], {
+    encoding: "utf8"
+  });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /Unsupported format: xml.*markdown or json/);
+});
+
+test("CLI rejects --format without a value", () => {
+  const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/read-only-route.json", "--format"], {
+    encoding: "utf8"
+  });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /Missing value for --format/);
 });
