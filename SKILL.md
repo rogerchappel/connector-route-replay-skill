@@ -23,7 +23,7 @@ Default commands read local files and write reports to stdout only. The skill mu
 
 ```sh
 connector-route-replay replay fixtures/read-only-route.json --format markdown
-connector-route-replay replay fixtures/write-action-route.yaml --format json
+connector-route-replay replay fixtures/write-action-route.json --format json
 connector-route-replay verify fixtures --policy examples/policy.json
 ```
 
