@@ -35,7 +35,10 @@ try {
 
 function readOption(values, name) {
   const index = values.indexOf(name);
-  return index === -1 ? undefined : values[index + 1];
+  if (index === -1) return undefined;
+  const value = values[index + 1];
+  if (!value || value.startsWith("--")) throw new Error(`Missing value for ${name}`);
+  return value;
 }
 
 function usage(message, status = 2) {

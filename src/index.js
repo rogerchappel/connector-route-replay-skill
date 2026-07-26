@@ -73,6 +73,7 @@ export function verifyFixtures(dirPath, options = {}) {
 
 export function renderReport(replay, format = "markdown") {
   if (format === "json") return `${JSON.stringify(replay, null, 2)}\n`;
+  if (format !== "markdown") throw new Error(`Unsupported format: ${format}. Expected markdown or json`);
   const lines = [
     `# Connector Route Replay: ${replay.id}`,
     "",
