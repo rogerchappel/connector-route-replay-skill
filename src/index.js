@@ -4,7 +4,7 @@ import path from "node:path";
 const DEFAULT_POLICY = {
   blockedTools: [],
   approvalRequiredIntents: ["write", "delete", "publish"],
-  dryRunRequiredSideEffects: ["external-write", "notification-send", "destructive-change"]
+  dryRunRequiredSideEffects: ["external-write", "notification-send", "destructive-change", "credential-access"]
 };
 
 export function loadFixture(filePath) {

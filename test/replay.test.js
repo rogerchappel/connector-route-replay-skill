@@ -17,6 +17,31 @@ test("classifies write route as explicit approval", () => {
   assert.equal(replay.dryRunOnly, true);
 });
 
+test("applies approval and dry-run gates according to route side effects", () => {
+  const cases = [
+    ["fixtures/credential-access-route.json", "explicit-approval", true],
+    ["fixtures/write-action-route.json", "explicit-approval", true],
+    ["fixtures/read-only-route.json", "none", false]
+  ];
+
+  for (const [fixturePath, approval, dryRunOnly] of cases) {
+    const replay = replayRoute(loadFixture(fixturePath));
+    assert.equal(replay.approval, approval, fixturePath);
+    assert.equal(replay.dryRunOnly, dryRunOnly, fixturePath);
+  }
+});
+
+test("custom policy merging preserves credential-access defaults unless explicitly replaced", () => {
+  const fixture = loadFixture("fixtures/credential-access-route.json");
+  const mergedReplay = replayRoute(fixture, { blockedTools: ["unused.tool"] });
+  assert.equal(mergedReplay.approval, "explicit-approval");
+  assert.equal(mergedReplay.dryRunOnly, true);
+
+  const overriddenReplay = replayRoute(fixture, { dryRunRequiredSideEffects: ["external-write"] });
+  assert.equal(overriddenReplay.approval, "none");
+  assert.equal(overriddenReplay.dryRunOnly, false);
+});
+
 test("marks tied read routes as clarify", () => {
   const replay = replayRoute(loadFixture("fixtures/ambiguous-route.json"), loadPolicy("examples/policy.json"));
   assert.equal(replay.approval, "clarify");
@@ -32,7 +57,7 @@ test("parses simple YAML and avoids blocked live sender", () => {
 test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
   assert.equal(result.ok, true);
-  assert.equal(result.count, 4);
+  assert.equal(result.count, 5);
 });
 
 test("renders markdown report", () => {
@@ -56,6 +81,23 @@ test("CLI executes the documented JSON replay path", () => {
   });
   const parsed = JSON.parse(output);
   assert.equal(parsed.selected.name, "crm.write");
+});
+
+test("CLI reports approval and dry-run gates for credential, write, and read routes", () => {
+  const cases = [
+    ["fixtures/credential-access-route.json", "explicit-approval", true],
+    ["fixtures/write-action-route.json", "explicit-approval", true],
+    ["fixtures/read-only-route.json", "none", false]
+  ];
+
+  for (const [fixturePath, approval, dryRunOnly] of cases) {
+    const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", fixturePath, "--format", "json"], {
+      encoding: "utf8"
+    });
+    const parsed = JSON.parse(output);
+    assert.equal(parsed.approval, approval, fixturePath);
+    assert.equal(parsed.dryRunOnly, dryRunOnly, fixturePath);
+  }
 });
 
 test("CLI rejects an unsupported replay format", () => {
