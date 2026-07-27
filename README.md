@@ -20,6 +20,7 @@ node bin/connector-route-replay.js replay fixtures/write-action-route.json --for
 ```sh
 connector-route-replay replay fixtures/read-only-route.json --format markdown
 connector-route-replay replay fixtures/write-action-route.json --format json
+connector-route-replay replay fixtures/credential-access-route.json --format json
 connector-route-replay verify fixtures --policy examples/policy.json
 ```
 
@@ -57,8 +58,9 @@ Fixtures are JSON by default. A small YAML subset is supported for simple scalar
 
 - All commands operate on local fixture files only.
 - Approval gates are explanatory, not a replacement for platform policy.
-- Any route with external writes, destructive actions, or credential access is treated as requiring approval unless policy explicitly blocks it.
+- By default, any route with external writes, destructive actions, notification sends, or credential access requires approval and is marked `dryRunOnly`.
 - `dryRunOnly` routes are reported separately so agents can rehearse action plans before asking for access.
+- Custom policy objects are merged over the defaults. Omitted fields retain their default values; supplying an array such as `dryRunRequiredSideEffects` explicitly replaces that entire default array.
 
 ## Limitations
 
