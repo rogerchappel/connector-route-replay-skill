@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Require approval and dry-run handling for credential-access routes by default.
 - Correct the documented JSON replay path and reject missing or unsupported output formats.
 - Use structured `npm pack --json` output for package smoke verification.
 - Tighten the release-check CI workflow permissions and labels.
