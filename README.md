@@ -26,6 +26,8 @@ connector-route-replay verify fixtures --policy examples/policy.json
 
 `replay` scores one fixture and emits a report. `verify` scans a fixture directory, compares expected route and approval values, and exits non-zero on mismatch.
 
+Invalid command lines exit with usage status `2` and print an actionable error plus usage text to stderr. This includes unknown options, extra positional arguments, repeated options, missing option values, and command-specific options such as `--format` on `verify`. Runtime and verification failures use status `1`.
+
 ## Fixture Shape
 
 Fixtures are JSON by default. A small YAML subset is supported for simple scalar/list/object fixtures.
