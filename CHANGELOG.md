@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Reject ambiguous or unsupported CLI arguments with consistent usage errors.
 - Require approval and dry-run handling for credential-access routes by default.
 - Correct the documented JSON replay path and reject missing or unsupported output formats.
 - Use structured `npm pack --json` output for package smoke verification.

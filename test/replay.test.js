@@ -1,7 +1,31 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import test from "node:test";
-import { loadFixture, loadPolicy, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
+import { CliUsageError, loadFixture, loadPolicy, parseCliArguments, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
+
+test("library parser returns command-specific arguments", () => {
+  assert.deepEqual(
+    parseCliArguments(["replay", "fixture.json", "--policy", "policy.json", "--format", "json"]),
+    { command: "replay", target: "fixture.json", format: "json", policy: "policy.json" }
+  );
+  assert.deepEqual(
+    parseCliArguments(["verify", "fixtures", "--policy", "policy.json"]),
+    { command: "verify", target: "fixtures", format: "markdown", policy: "policy.json" }
+  );
+});
+
+test("library parser rejects invalid argument forms deterministically", () => {
+  const cases = [
+    [["replay", "fixture.json", "--bogus", "value"], /Unknown option for replay: --bogus/],
+    [["replay", "fixture.json", "extra.json"], /Unexpected positional argument for replay: extra.json/],
+    [["replay", "fixture.json", "--format", "json", "--format", "markdown"], /Duplicate option for replay: --format/],
+    [["verify", "fixtures", "--format", "json"], /Option --format is not supported by verify/]
+  ];
+
+  for (const [args, message] of cases) {
+    assert.throws(() => parseCliArguments(args), (error) => error instanceof CliUsageError && message.test(error.message));
+  }
+});
 
 test("selects read-only CRM route without approval", () => {
   const replay = replayRoute(loadFixture("fixtures/read-only-route.json"), loadPolicy("examples/policy.json"));
@@ -113,7 +137,25 @@ test("CLI rejects --format without a value", () => {
   const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/read-only-route.json", "--format"], {
     encoding: "utf8"
   });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 2);
   assert.equal(result.stdout, "");
   assert.match(result.stderr, /Missing value for --format/);
+  assert.match(result.stderr, /Usage:/);
+});
+
+test("CLI rejects invalid argument forms with usage status and actionable stderr", () => {
+  const cases = [
+    [["replay", "fixtures/read-only-route.json", "--bogus", "value"], /Unknown option for replay: --bogus/],
+    [["replay", "fixtures/read-only-route.json", "extra.json"], /Unexpected positional argument for replay: extra.json/],
+    [["replay", "fixtures/read-only-route.json", "--format", "json", "--format", "markdown"], /Duplicate option for replay: --format/],
+    [["verify", "fixtures", "--format", "json"], /Option --format is not supported by verify/]
+  ];
+
+  for (const [args, message] of cases) {
+    const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", ...args], { encoding: "utf8" });
+    assert.equal(result.status, 2, args.join(" "));
+    assert.equal(result.stdout, "", args.join(" "));
+    assert.match(result.stderr, message, args.join(" "));
+    assert.match(result.stderr, /Usage:/, args.join(" "));
+  }
 });
