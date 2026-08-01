@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+export { CliUsageError, parseCliArguments } from "./cli-args.js";
+
 const DEFAULT_POLICY = {
   blockedTools: [],
   approvalRequiredIntents: ["write", "delete", "publish"],
