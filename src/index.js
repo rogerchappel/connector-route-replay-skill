@@ -156,6 +156,25 @@ function validateFixture(fixture, filePath) {
   if (!fixture.id) throw new Error(`Fixture ${filePath} is missing id`);
   if (!fixture.request?.summary || !fixture.request?.intent) throw new Error(`Fixture ${fixture.id} is missing request summary or intent`);
   if (!Array.isArray(fixture.candidates) || fixture.candidates.length === 0) throw new Error(`Fixture ${fixture.id} needs candidates`);
+  fixture.candidates.forEach((candidate, index) => validateCandidate(candidate, fixture.id, index));
+}
+
+function validateCandidate(candidate, fixtureId, index) {
+  const label = `Fixture ${fixtureId} candidate ${index + 1}`;
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    throw new Error(`${label} must be an object`);
+  }
+  if (typeof candidate.name !== "string" || candidate.name.trim() === "") {
+    throw new Error(`${label} field name must be a non-empty string`);
+  }
+  for (const field of ["capabilities", "sideEffects", "evidence"]) {
+    if (Object.hasOwn(candidate, field) && (!Array.isArray(candidate[field]) || candidate[field].some((value) => typeof value !== "string"))) {
+      throw new Error(`${label} field ${field} must be an array of strings`);
+    }
+  }
+  if (Object.hasOwn(candidate, "dryRun") && typeof candidate.dryRun !== "boolean") {
+    throw new Error(`${label} field dryRun must be a boolean`);
+  }
 }
 
 function parseSimpleYaml(text) {
