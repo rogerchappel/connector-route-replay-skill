@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { CliUsageError, loadFixture, loadPolicy, parseCliArguments, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
 
@@ -82,6 +85,39 @@ test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
   assert.equal(result.ok, true);
   assert.equal(result.count, 5);
+});
+
+test("library rejects malformed fixture candidates with field-specific errors", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-fixtures-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const cases = [
+    [null, /candidate 1 must be an object/],
+    [{}, /candidate 1 field name must be a non-empty string/],
+    [{ name: "route", capabilities: "read" }, /candidate 1 field capabilities must be an array of strings/],
+    [{ name: "route", sideEffects: [false] }, /candidate 1 field sideEffects must be an array of strings/],
+    [{ name: "route", evidence: {} }, /candidate 1 field evidence must be an array of strings/],
+    [{ name: "route", dryRun: "false" }, /candidate 1 field dryRun must be a boolean/]
+  ];
+
+  for (const [candidate, message] of cases) {
+    const fixturePath = path.join(dir, "invalid.json");
+    fs.writeFileSync(fixturePath, JSON.stringify({ id: "invalid", request: { summary: "Test", intent: "read" }, candidates: [candidate] }));
+    assert.throws(() => loadFixture(fixturePath), message);
+  }
+});
+
+test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-cli-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixturePath = path.join(dir, "malformed.json");
+  fs.writeFileSync(fixturePath, JSON.stringify({ id: "malformed", request: { summary: "Test", intent: "read" }, candidates: [{}] }));
+
+  for (const args of [["replay", fixturePath, "--format", "json"], ["verify", dir]]) {
+    const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", ...args], { encoding: "utf8" });
+    assert.equal(result.status, 1, args[0]);
+    assert.equal(result.stdout, "", args[0]);
+    assert.match(result.stderr, /candidate 1 field name must be a non-empty string/, args[0]);
+  }
 });
 
 test("renders markdown report", () => {

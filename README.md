@@ -32,6 +32,8 @@ Invalid command lines exit with usage status `2` and print an actionable error p
 
 Fixtures are JSON by default. A small YAML subset is supported for simple scalar/list/object fixtures.
 
+Each item in `candidates` must be an object with a non-empty string `name`. When present, `capabilities`, `sideEffects`, and `evidence` must be arrays of strings, and `dryRun` must be a boolean. Both `replay` and `verify` reject malformed candidates before route scoring and identify the candidate number and invalid field.
+
 ```json
 {
   "id": "write-action-route",
