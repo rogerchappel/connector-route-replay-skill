@@ -81,10 +81,32 @@ test("parses simple YAML and avoids blocked live sender", () => {
   assert.equal(replay.rejected.some((candidate) => candidate.name === "mail.send.live" && candidate.blocked), true);
 });
 
+test("decodes quoted scalars in YAML fixture fields", () => {
+  const fixture = loadFixture("fixtures/quoted-route.yaml");
+  const replay = replayRoute(fixture, loadPolicy("examples/policy.json"));
+
+  assert.equal(replay.id, "quoted-route");
+  assert.deepEqual(replay.request, {
+    summary: "Look up the customer's CRM record",
+    intent: "read",
+    risk: "low",
+    keywords: ["crm", "customer"]
+  });
+  assert.equal(replay.selected.name, "crm.search");
+  assert.deepEqual(replay.selected.capabilities, ["read", "crm", "customer"]);
+  assert.deepEqual(replay.selected.sideEffects, ["local-file"]);
+  assert.deepEqual(replay.selected.evidence.slice(0, 2), [
+    "Matches the requested CRM lookup",
+    "Uses the customer's identifier"
+  ]);
+  assert.deepEqual(replay.expected, { selected: "crm.search", approval: "none" });
+  assert.equal(replay.approval, "none");
+});
+
 test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
   assert.equal(result.ok, true);
-  assert.equal(result.count, 5);
+  assert.equal(result.count, 6);
 });
 
 test("library rejects malformed fixture candidates with field-specific errors", (t) => {
@@ -141,6 +163,31 @@ test("CLI executes the documented JSON replay path", () => {
   });
   const parsed = JSON.parse(output);
   assert.equal(parsed.selected.name, "crm.write");
+});
+
+test("CLI replay and verify report decoded quoted YAML values", () => {
+  const replayOutput = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/quoted-route.yaml", "--format", "json"], {
+    encoding: "utf8"
+  });
+  const replay = JSON.parse(replayOutput);
+  assert.equal(replay.id, "quoted-route");
+  assert.equal(replay.request.summary, "Look up the customer's CRM record");
+  assert.equal(replay.selected.name, "crm.search");
+  assert.equal(replay.expected.approval, "none");
+
+  const verifyOutput = execFileSync(process.execPath, ["bin/connector-route-replay.js", "verify", "fixtures", "--policy", "examples/policy.json"], {
+    encoding: "utf8"
+  });
+  const verify = JSON.parse(verifyOutput);
+  const quoted = verify.results.find((result) => result.file === "quoted-route.yaml");
+  assert.deepEqual(quoted, {
+    file: "quoted-route.yaml",
+    id: "quoted-route",
+    selected: "crm.search",
+    approval: "none",
+    ok: true,
+    expected: { selected: "crm.search", approval: "none" }
+  });
 });
 
 test("CLI reports approval and dry-run gates for credential, write, and read routes", () => {
