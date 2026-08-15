@@ -58,6 +58,27 @@ Each item in `candidates` must be an object with a non-empty string `name`. When
 }
 ```
 
+The fixture schema is validated before scoring:
+
+- `id`, `request.summary`, and `request.intent` are required non-empty strings.
+- `request.risk`, when present, is a string. `request.keywords`, when present, is an array of strings.
+- `candidates` is a non-empty array of objects. Each candidate requires a non-empty string `name`; optional `capabilities`, `sideEffects`, and `evidence` fields are arrays of strings, and optional `dryRun` is a boolean.
+- Empty strings are accepted inside string arrays and are compared literally; they are not trimmed, removed, or coerced. Required scalar strings cannot be empty or whitespace-only.
+
+## Policy Shape
+
+A policy file is a JSON object. All supported fields are optional and replace the corresponding default when supplied:
+
+```json
+{
+  "blockedTools": ["mail.send.live"],
+  "approvalRequiredIntents": ["write", "delete", "publish"],
+  "dryRunRequiredSideEffects": ["external-write", "notification-send"]
+}
+```
+
+Each policy field must be an array of strings. As with fixture arrays, empty strings are accepted and compared literally without coercion. The library entry points and the `replay` and `verify` CLI commands reject invalid fixture or policy fields before scoring, with the invalid field named in the error.
+
 ## Safety Notes
 
 - All commands operate on local fixture files only.
