@@ -106,6 +106,46 @@ test("library rejects malformed fixture candidates with field-specific errors", 
   }
 });
 
+test("library rejects malformed request fields before scoring", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-requests-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const base = { id: "invalid", request: { summary: "Test", intent: "read" }, candidates: [{ name: "route" }] };
+  const cases = [
+    [{ ...base, request: null }, /Fixture invalid field request must be an object/],
+    [{ ...base, request: { ...base.request, summary: 12 } }, /Fixture invalid request field summary must be a non-empty string/],
+    [{ ...base, request: { ...base.request, intent: false } }, /Fixture invalid request field intent must be a non-empty string/],
+    [{ ...base, request: { ...base.request, risk: 1 } }, /Fixture invalid request field risk must be a string/],
+    [{ ...base, request: { ...base.request, keywords: "read" } }, /Fixture invalid request field keywords must be an array of strings/],
+    [{ ...base, request: { ...base.request, keywords: ["read", null] } }, /Fixture invalid request field keywords must be an array of strings/]
+  ];
+
+  for (const [fixture, message] of cases) {
+    const fixturePath = path.join(dir, "invalid.json");
+    fs.writeFileSync(fixturePath, JSON.stringify(fixture));
+    assert.throws(() => loadFixture(fixturePath), message);
+    assert.throws(() => replayRoute(fixture), message);
+  }
+});
+
+test("library rejects malformed policy fields before classification", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-policies-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixture = loadFixture("fixtures/read-only-route.json");
+  const cases = [
+    [null, /Policy must be an object/],
+    [{ blockedTools: { route: true } }, /Policy field blockedTools must be an array of strings/],
+    [{ approvalRequiredIntents: "bread" }, /Policy field approvalRequiredIntents must be an array of strings/],
+    [{ dryRunRequiredSideEffects: ["external-write", false] }, /Policy field dryRunRequiredSideEffects must be an array of strings/]
+  ];
+
+  for (const [policy, message] of cases) {
+    const policyPath = path.join(dir, "invalid.json");
+    fs.writeFileSync(policyPath, JSON.stringify(policy));
+    assert.throws(() => loadPolicy(policyPath), message);
+    assert.throws(() => replayRoute(fixture, policy), message);
+  }
+});
+
 test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-cli-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -117,6 +157,33 @@ test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
     assert.equal(result.status, 1, args[0]);
     assert.equal(result.stdout, "", args[0]);
     assert.match(result.stderr, /candidate 1 field name must be a non-empty string/, args[0]);
+  }
+});
+
+test("CLI replay and verify reject malformed request and policy fields", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-schema-cli-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixturePath = path.join(dir, "malformed.json");
+  const policyPath = path.join(dir, "policy.json");
+  fs.writeFileSync(fixturePath, JSON.stringify({
+    id: "malformed",
+    request: { summary: "Test", intent: "read", keywords: "read" },
+    candidates: [{ name: "route" }]
+  }));
+  fs.writeFileSync(policyPath, JSON.stringify({ approvalRequiredIntents: "bread" }));
+
+  const cases = [
+    [["replay", fixturePath], /request field keywords must be an array of strings/],
+    [["verify", dir], /request field keywords must be an array of strings/],
+    [["replay", "fixtures/read-only-route.json", "--policy", policyPath], /Policy field approvalRequiredIntents must be an array of strings/],
+    [["verify", "fixtures", "--policy", policyPath], /Policy field approvalRequiredIntents must be an array of strings/]
+  ];
+
+  for (const [args, message] of cases) {
+    const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", ...args], { encoding: "utf8" });
+    assert.equal(result.status, 1, args.join(" "));
+    assert.equal(result.stdout, "", args.join(" "));
+    assert.match(result.stderr, message, args.join(" "));
   }
 });
 

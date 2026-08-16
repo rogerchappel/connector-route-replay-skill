@@ -19,10 +19,14 @@ export function loadFixture(filePath) {
 
 export function loadPolicy(filePath) {
   if (!filePath) return DEFAULT_POLICY;
-  return { ...DEFAULT_POLICY, ...JSON.parse(fs.readFileSync(filePath, "utf8")) };
+  const policy = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  validatePolicy(policy);
+  return { ...DEFAULT_POLICY, ...policy };
 }
 
 export function replayRoute(fixture, policy = DEFAULT_POLICY) {
+  validateFixture(fixture, "replay input");
+  validatePolicy(policy);
   const normalizedPolicy = { ...DEFAULT_POLICY, ...policy };
   const scored = fixture.candidates
     .map((candidate, index) => scoreCandidate(candidate, fixture.request, normalizedPolicy, index))
@@ -152,11 +156,40 @@ function hasDryRunRequiredSideEffect(candidate, policy) {
 }
 
 function validateFixture(fixture, filePath) {
-  if (!fixture || typeof fixture !== "object") throw new Error(`Invalid fixture in ${filePath}`);
-  if (!fixture.id) throw new Error(`Fixture ${filePath} is missing id`);
-  if (!fixture.request?.summary || !fixture.request?.intent) throw new Error(`Fixture ${fixture.id} is missing request summary or intent`);
+  if (!fixture || typeof fixture !== "object" || Array.isArray(fixture)) throw new Error(`Invalid fixture in ${filePath}`);
+  if (typeof fixture.id !== "string" || fixture.id.trim() === "") throw new Error(`Fixture ${filePath} field id must be a non-empty string`);
+  validateRequest(fixture.request, fixture.id);
   if (!Array.isArray(fixture.candidates) || fixture.candidates.length === 0) throw new Error(`Fixture ${fixture.id} needs candidates`);
   fixture.candidates.forEach((candidate, index) => validateCandidate(candidate, fixture.id, index));
+}
+
+function validateRequest(request, fixtureId) {
+  const label = `Fixture ${fixtureId}`;
+  if (!request || typeof request !== "object" || Array.isArray(request)) {
+    throw new Error(`${label} field request must be an object`);
+  }
+  for (const field of ["summary", "intent"]) {
+    if (typeof request[field] !== "string" || request[field].trim() === "") {
+      throw new Error(`${label} request field ${field} must be a non-empty string`);
+    }
+  }
+  if (Object.hasOwn(request, "risk") && typeof request.risk !== "string") {
+    throw new Error(`${label} request field risk must be a string`);
+  }
+  if (Object.hasOwn(request, "keywords")) validateStringArray(request.keywords, `${label} request field keywords`);
+}
+
+function validatePolicy(policy) {
+  if (!policy || typeof policy !== "object" || Array.isArray(policy)) throw new Error("Policy must be an object");
+  for (const field of ["blockedTools", "approvalRequiredIntents", "dryRunRequiredSideEffects"]) {
+    if (Object.hasOwn(policy, field)) validateStringArray(policy[field], `Policy field ${field}`);
+  }
+}
+
+function validateStringArray(value, label) {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    throw new Error(`${label} must be an array of strings`);
+  }
 }
 
 function validateCandidate(candidate, fixtureId, index) {
@@ -168,9 +201,7 @@ function validateCandidate(candidate, fixtureId, index) {
     throw new Error(`${label} field name must be a non-empty string`);
   }
   for (const field of ["capabilities", "sideEffects", "evidence"]) {
-    if (Object.hasOwn(candidate, field) && (!Array.isArray(candidate[field]) || candidate[field].some((value) => typeof value !== "string"))) {
-      throw new Error(`${label} field ${field} must be an array of strings`);
-    }
+    if (Object.hasOwn(candidate, field)) validateStringArray(candidate[field], `${label} field ${field}`);
   }
   if (Object.hasOwn(candidate, "dryRun") && typeof candidate.dryRun !== "boolean") {
     throw new Error(`${label} field dryRun must be a boolean`);
