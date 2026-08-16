@@ -249,6 +249,16 @@ function splitYamlPair(text) {
 }
 
 function coerceYaml(value) {
+  if (value.startsWith('"') && value.endsWith('"')) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      throw new Error(`Invalid double-quoted YAML scalar: ${value}`);
+    }
+  }
+  if (value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replaceAll("''", "'");
+  }
   if (value === "true") return true;
   if (value === "false") return false;
   if (value === "[]") return [];

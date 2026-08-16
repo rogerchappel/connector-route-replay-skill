@@ -1,0 +1,23 @@
+id: "quoted-route"
+request:
+  summary: 'Look up the customer''s CRM record'
+  intent: "read"
+  risk: 'low'
+  keywords:
+    - "crm"
+    - 'customer'
+candidates:
+  - name: "crm.search"
+    capabilities:
+      - "read"
+      - 'crm'
+      - "customer"
+    sideEffects:
+      - 'local-file'
+    dryRun: false
+    evidence:
+      - "Matches the requested CRM lookup"
+      - 'Uses the customer''s identifier'
+expected:
+  selected: "crm.search"
+  approval: 'none'
