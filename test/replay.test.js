@@ -93,11 +93,11 @@ test("decodes quoted scalars in YAML fixture fields", () => {
     keywords: ["crm", "customer"]
   });
   assert.equal(replay.selected.name, "crm.search");
-  assert.deepEqual(replay.selected.capabilities, ["read", "crm", "customer"]);
+  assert.deepEqual(replay.selected.capabilities, ["read", "crm", "customer:lookup"]);
   assert.deepEqual(replay.selected.sideEffects, ["local-file"]);
   assert.deepEqual(replay.selected.evidence.slice(0, 2), [
-    "Matches the requested CRM lookup",
-    "Uses the customer's identifier"
+    "source: local fixture",
+    "Uses: the customer's identifier"
   ]);
   assert.deepEqual(replay.expected, { selected: "crm.search", approval: "none" });
   assert.equal(replay.approval, "none");
@@ -240,6 +240,8 @@ test("CLI replay and verify report decoded quoted YAML values", () => {
   assert.equal(replay.id, "quoted-route");
   assert.equal(replay.request.summary, "Look up the customer's CRM record");
   assert.equal(replay.selected.name, "crm.search");
+  assert.deepEqual(replay.selected.capabilities, ["read", "crm", "customer:lookup"]);
+  assert.deepEqual(replay.selected.evidence.slice(0, 2), ["source: local fixture", "Uses: the customer's identifier"]);
   assert.equal(replay.expected.approval, "none");
 
   const verifyOutput = execFileSync(process.execPath, ["bin/connector-route-replay.js", "verify", "fixtures", "--policy", "examples/policy.json"], {

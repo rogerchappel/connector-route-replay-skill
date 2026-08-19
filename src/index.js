@@ -220,7 +220,7 @@ function parseSimpleYaml(text) {
     if (trimmed.startsWith("- ")) {
       if (!Array.isArray(parent)) throw new Error("Simple YAML parser expected list parent");
       const itemText = trimmed.slice(2);
-      if (itemText.includes(":")) {
+      if (findYamlPairIndex(itemText) !== -1) {
         const [key, value] = splitYamlPair(itemText);
         const item = { [key]: coerceYaml(value) };
         parent.push(item);
@@ -243,9 +243,30 @@ function parseSimpleYaml(text) {
 }
 
 function splitYamlPair(text) {
-  const index = text.indexOf(":");
+  const index = findYamlPairIndex(text);
   if (index === -1) return [text, ""];
   return [text.slice(0, index).trim(), text.slice(index + 1).trim()];
+}
+
+function findYamlPairIndex(text) {
+  let quote = null;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (quote === '"' && character === "\\") {
+      index += 1;
+      continue;
+    }
+    if (quote === "'" && character === "'" && text[index + 1] === "'") {
+      index += 1;
+      continue;
+    }
+    if (character === '"' || character === "'") {
+      quote = quote === character ? null : quote ?? character;
+      continue;
+    }
+    if (character === ":" && quote === null) return index;
+  }
+  return -1;
 }
 
 function coerceYaml(value) {
