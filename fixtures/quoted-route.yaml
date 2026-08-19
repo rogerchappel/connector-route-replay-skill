@@ -11,13 +11,13 @@ candidates:
     capabilities:
       - "read"
       - 'crm'
-      - "customer"
+      - "customer:lookup"
     sideEffects:
       - 'local-file'
     dryRun: false
     evidence:
-      - "Matches the requested CRM lookup"
-      - 'Uses the customer''s identifier'
+      - "source: local fixture"
+      - 'Uses: the customer''s identifier'
 expected:
   selected: "crm.search"
   approval: 'none'
