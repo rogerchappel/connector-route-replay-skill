@@ -105,4 +105,4 @@ npm run release:check
 ```
 
 `release:check` runs syntax checks, fixture-backed tests, the replay/verify smoke
-paths, and an npm pack dry run.
+paths, and a real packed-package install and CLI consumer probe.

@@ -9,11 +9,15 @@
 
 ## Verification
 
-Passed locally on 2026-07-01:
+The canonical release gate is reproducible from a clean checkout:
 
 ```sh
-npm run check        # pass
-npm test             # pass, 7 tests
-npm run smoke        # pass, replay + fixture verify
-npm run package:smoke # pass, npm pack --dry-run
+npm ci
+npm run release:check
 ```
+
+`release:check` runs syntax checks, the complete Node test suite, replay and
+fixture verification smoke commands, and the package consumer probe. The
+consumer probe creates a real tarball, installs it into a temporary project,
+and runs the packaged `connector-route-replay` binary against a fixture shipped
+inside the package. Temporary package and consumer files are always removed.
