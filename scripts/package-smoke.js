@@ -1,43 +1,42 @@
-import { spawnSync } from 'node:child_process';
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const result = spawnSync('npm', ['pack', '--dry-run', '--json'], { encoding: 'utf8' });
-const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-package-"));
+const packDirectory = path.join(temporaryRoot, "pack");
+const consumerDirectory = path.join(temporaryRoot, "consumer");
 
-if (result.status !== 0) {
-  process.stderr.write(output);
-  process.exit(result.status || 1);
-}
-
-let packed;
 try {
-  [packed] = JSON.parse(result.stdout);
-} catch (error) {
-  process.stderr.write(output);
-  console.error(`could not parse npm pack json: ${error.message}`);
-  process.exit(1);
+  fs.mkdirSync(packDirectory);
+  fs.mkdirSync(consumerDirectory);
+  fs.writeFileSync(path.join(consumerDirectory, "package.json"), JSON.stringify({ private: true }));
+
+  const tarballName = execFileSync("npm", ["pack", "--pack-destination", packDirectory], {
+    cwd: projectRoot,
+    encoding: "utf8"
+  }).trim().split("\n").at(-1);
+  assert.ok(tarballName, "npm pack did not report a tarball");
+  const tarballPath = path.join(packDirectory, tarballName);
+  assert.ok(fs.statSync(tarballPath).isFile(), `npm pack did not create ${tarballName}`);
+
+  execFileSync("npm", ["install", "--ignore-scripts", tarballPath], {
+    cwd: consumerDirectory,
+    stdio: "pipe"
+  });
+  const installedPackage = path.join(consumerDirectory, "node_modules", "connector-route-replay-skill");
+  const cliPath = path.join(consumerDirectory, "node_modules", ".bin", "connector-route-replay");
+  const fixturePath = path.join(installedPackage, "fixtures", "read-only-route.json");
+  const output = execFileSync(cliPath, ["replay", fixturePath, "--format", "markdown"], {
+    cwd: consumerDirectory,
+    encoding: "utf8"
+  });
+  assert.match(output, /# Connector Route Replay: read-only-route/);
+  assert.match(output, /Tool: crm\.search/);
+  process.stdout.write(`Validated installed CLI from ${tarballName}\n`);
+} finally {
+  fs.rmSync(temporaryRoot, { recursive: true, force: true });
 }
-
-const packedFiles = new Set((packed.files || []).map((file) => file.path));
-
-const required = [
-  'bin/connector-route-replay.js',
-  'src/index.js',
-  'fixtures/read-only-route.json',
-  'fixtures/write-action-route.json',
-  'examples/policy.json',
-  'docs/RELEASE_CANDIDATE.md',
-  'SKILL.md',
-  'README.md',
-  'LICENSE',
-  'SECURITY.md',
-  'CHANGELOG.md'
-];
-
-const missing = required.filter((entry) => !packedFiles.has(entry));
-
-if (missing.length > 0) {
-  console.error(`package smoke missing entries:\n${missing.join('\n')}`);
-  process.exit(1);
-}
-
-console.log(`package smoke passed: ${packed.filename}`);
