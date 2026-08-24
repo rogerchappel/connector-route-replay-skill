@@ -168,6 +168,27 @@ test("library rejects malformed policy fields before classification", (t) => {
   }
 });
 
+test("library rejects malformed expected fields before scoring", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-expected-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const base = { id: "invalid", request: { summary: "Test", intent: "read" }, candidates: [{ name: "route" }] };
+  const cases = [
+    [{ ...base, expected: "not-an-object" }, /Fixture invalid field expected must be an object/],
+    [{ ...base, expected: [] }, /Fixture invalid field expected must be an object/],
+    [{ ...base, expected: { selected: "" } }, /Fixture invalid expected field selected must be a non-empty string/],
+    [{ ...base, expected: { selected: false } }, /Fixture invalid expected field selected must be a non-empty string/],
+    [{ ...base, expected: { approval: "sometimes" } }, /Fixture invalid expected field approval must be one of none, clarify, explicit-approval, blocked/],
+    [{ ...base, expected: { approval: true } }, /Fixture invalid expected field approval must be one of none, clarify, explicit-approval, blocked/]
+  ];
+
+  for (const [fixture, message] of cases) {
+    const fixturePath = path.join(dir, "invalid.json");
+    fs.writeFileSync(fixturePath, JSON.stringify(fixture));
+    assert.throws(() => loadFixture(fixturePath), message);
+    assert.throws(() => replayRoute(fixture), message);
+  }
+});
+
 test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-cli-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -206,6 +227,25 @@ test("CLI replay and verify reject malformed request and policy fields", (t) => 
     assert.equal(result.status, 1, args.join(" "));
     assert.equal(result.stdout, "", args.join(" "));
     assert.match(result.stderr, message, args.join(" "));
+  }
+});
+
+test("CLI replay and verify reject malformed expected fields", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-expected-cli-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixturePath = path.join(dir, "malformed.json");
+  fs.writeFileSync(fixturePath, JSON.stringify({
+    id: "malformed",
+    request: { summary: "Test", intent: "read" },
+    candidates: [{ name: "route" }],
+    expected: "not-an-object"
+  }));
+
+  for (const args of [["replay", fixturePath], ["verify", dir]]) {
+    const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", ...args], { encoding: "utf8" });
+    assert.equal(result.status, 1, args[0]);
+    assert.equal(result.stdout, "", args[0]);
+    assert.match(result.stderr, /field expected must be an object/, args[0]);
   }
 });
 
