@@ -8,6 +8,7 @@ const DEFAULT_POLICY = {
   approvalRequiredIntents: ["write", "delete", "publish"],
   dryRunRequiredSideEffects: ["external-write", "notification-send", "destructive-change", "credential-access"]
 };
+const APPROVAL_VALUES = ["none", "clarify", "explicit-approval", "blocked"];
 
 export function loadFixture(filePath) {
   const text = fs.readFileSync(filePath, "utf8");
@@ -161,6 +162,20 @@ function validateFixture(fixture, filePath) {
   validateRequest(fixture.request, fixture.id);
   if (!Array.isArray(fixture.candidates) || fixture.candidates.length === 0) throw new Error(`Fixture ${fixture.id} needs candidates`);
   fixture.candidates.forEach((candidate, index) => validateCandidate(candidate, fixture.id, index));
+  if (Object.hasOwn(fixture, "expected")) validateExpected(fixture.expected, fixture.id);
+}
+
+function validateExpected(expected, fixtureId) {
+  const label = `Fixture ${fixtureId}`;
+  if (!expected || typeof expected !== "object" || Array.isArray(expected)) {
+    throw new Error(`${label} field expected must be an object`);
+  }
+  if (Object.hasOwn(expected, "selected") && (typeof expected.selected !== "string" || expected.selected.trim() === "")) {
+    throw new Error(`${label} expected field selected must be a non-empty string`);
+  }
+  if (Object.hasOwn(expected, "approval") && !APPROVAL_VALUES.includes(expected.approval)) {
+    throw new Error(`${label} expected field approval must be one of ${APPROVAL_VALUES.join(", ")}`);
+  }
 }
 
 function validateRequest(request, fixtureId) {
