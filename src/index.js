@@ -162,7 +162,19 @@ function validateFixture(fixture, filePath) {
   validateRequest(fixture.request, fixture.id);
   if (!Array.isArray(fixture.candidates) || fixture.candidates.length === 0) throw new Error(`Fixture ${fixture.id} needs candidates`);
   fixture.candidates.forEach((candidate, index) => validateCandidate(candidate, fixture.id, index));
+  validateUniqueCandidateNames(fixture.candidates, fixture.id);
   if (Object.hasOwn(fixture, "expected")) validateExpected(fixture.expected, fixture.id);
+}
+
+function validateUniqueCandidateNames(candidates, fixtureId) {
+  const firstIndexByName = new Map();
+  candidates.forEach((candidate, index) => {
+    const firstIndex = firstIndexByName.get(candidate.name);
+    if (firstIndex !== undefined) {
+      throw new Error(`Fixture ${fixtureId} candidates ${firstIndex + 1} and ${index + 1} use duplicate name ${JSON.stringify(candidate.name)}`);
+    }
+    firstIndexByName.set(candidate.name, index);
+  });
 }
 
 function validateExpected(expected, fixtureId) {
