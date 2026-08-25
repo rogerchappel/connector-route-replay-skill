@@ -32,7 +32,7 @@ Invalid command lines exit with usage status `2` and print an actionable error p
 
 Fixtures are JSON by default. A small YAML subset is supported for simple scalar/list/object fixtures. Scalar values may be unquoted, double quoted with JSON-style escapes, or single quoted with doubled apostrophes (`''`). Quoted list values may contain colons and remain strings; unquoted `key: value` list items create inline mappings. Quoted booleans remain strings; unquoted `true` and `false` become booleans.
 
-Each item in `candidates` must be an object with a non-empty string `name`. When present, `capabilities`, `sideEffects`, and `evidence` must be arrays of strings, and `dryRun` must be a boolean. Both `replay` and `verify` reject malformed candidates before route scoring and identify the candidate number and invalid field.
+Each item in `candidates` must be an object with a non-empty string `name`, and every candidate name in a fixture must be unique. Names are compared exactly, without trimming or case folding. When present, `capabilities`, `sideEffects`, and `evidence` must be arrays of strings, and `dryRun` must be a boolean. Both `replay` and `verify` reject malformed or duplicate candidates before route scoring; duplicate-name errors identify both candidate numbers.
 
 When present, `expected` must be an object. Its optional `selected` field is a non-empty route-name string, and its optional `approval` field is one of `none`, `clarify`, `explicit-approval`, or `blocked`. Both commands validate these assertions before scoring; malformed expectations are errors rather than verification mismatches.
 
@@ -64,7 +64,7 @@ The fixture schema is validated before scoring:
 
 - `id`, `request.summary`, and `request.intent` are required non-empty strings.
 - `request.risk`, when present, is a string. `request.keywords`, when present, is an array of strings.
-- `candidates` is a non-empty array of objects. Each candidate requires a non-empty string `name`; optional `capabilities`, `sideEffects`, and `evidence` fields are arrays of strings, and optional `dryRun` is a boolean.
+- `candidates` is a non-empty array of objects. Each candidate requires a non-empty string `name` that is unique within the fixture; optional `capabilities`, `sideEffects`, and `evidence` fields are arrays of strings, and optional `dryRun` is a boolean.
 - `expected`, when present, is an object. Optional `selected` is a non-empty string; optional `approval` is `none`, `clarify`, `explicit-approval`, or `blocked`.
 - Empty strings are accepted inside string arrays and are compared literally; they are not trimmed, removed, or coerced. Required scalar strings cannot be empty or whitespace-only.
 
