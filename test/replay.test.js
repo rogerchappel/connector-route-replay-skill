@@ -128,6 +128,40 @@ test("library rejects malformed fixture candidates with field-specific errors", 
   }
 });
 
+test("library rejects duplicate candidate names before scoring", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-duplicate-names-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixture = {
+    id: "duplicate-routes",
+    request: { summary: "Find a record", intent: "read" },
+    candidates: [
+      { name: "crm.search", capabilities: ["read", "crm"] },
+      { name: "crm.search", capabilities: ["read", "customer"] }
+    ]
+  };
+  const fixturePath = path.join(dir, "duplicate.json");
+  fs.writeFileSync(fixturePath, JSON.stringify(fixture));
+
+  const message = /Fixture duplicate-routes candidates 1 and 2 use duplicate name "crm\.search"/;
+  assert.throws(() => loadFixture(fixturePath), message);
+  assert.throws(() => replayRoute(fixture), message);
+});
+
+test("distinct candidate names retain complete selected and rejected audit reporting", () => {
+  const replay = replayRoute({
+    id: "distinct-routes",
+    request: { summary: "Find a record", intent: "read", keywords: ["crm"] },
+    candidates: [
+      { name: "crm.search", capabilities: ["read", "crm"] },
+      { name: "customer.search", capabilities: ["read", "crm"] }
+    ]
+  });
+
+  assert.equal(replay.ambiguous, true);
+  assert.equal(replay.selected.name, "crm.search");
+  assert.deepEqual(replay.rejected.map((candidate) => candidate.name), ["customer.search"]);
+});
+
 test("library rejects malformed request fields before scoring", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-requests-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -200,6 +234,24 @@ test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
     assert.equal(result.status, 1, args[0]);
     assert.equal(result.stdout, "", args[0]);
     assert.match(result.stderr, /candidate 1 field name must be a non-empty string/, args[0]);
+  }
+});
+
+test("CLI replay and verify exit nonzero for duplicate candidate names", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-duplicate-cli-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixturePath = path.join(dir, "duplicate.json");
+  fs.writeFileSync(fixturePath, JSON.stringify({
+    id: "duplicate-routes",
+    request: { summary: "Find a record", intent: "read" },
+    candidates: [{ name: "crm.search" }, { name: "crm.search" }]
+  }));
+
+  for (const args of [["replay", fixturePath, "--format", "json"], ["verify", dir]]) {
+    const result = spawnSync(process.execPath, ["bin/connector-route-replay.js", ...args], { encoding: "utf8" });
+    assert.equal(result.status, 1, args[0]);
+    assert.equal(result.stdout, "", args[0]);
+    assert.match(result.stderr, /candidates 1 and 2 use duplicate name "crm\.search"/, args[0]);
   }
 });
 
