@@ -1,0 +1,19 @@
+{
+  "id": "many-tied-routes",
+  "request": { "summary": "Choose a deterministic read route", "intent": "read", "risk": "low" },
+  "candidates": [
+    { "name": "route-0", "capabilities": ["search"] },
+    { "name": "route-1", "capabilities": ["search"] },
+    { "name": "route-2", "capabilities": ["read"] },
+    { "name": "route-3", "capabilities": ["read"] },
+    { "name": "route-4", "capabilities": ["read"] },
+    { "name": "route-5", "capabilities": ["read"] },
+    { "name": "route-6", "capabilities": ["read"] },
+    { "name": "route-7", "capabilities": ["read"] },
+    { "name": "route-8", "capabilities": ["read"] },
+    { "name": "route-9", "capabilities": ["read"] },
+    { "name": "route-10", "capabilities": ["read"] },
+    { "name": "route-11", "capabilities": ["read"] }
+  ],
+  "expected": { "selected": "route-2", "approval": "clarify" }
+}
