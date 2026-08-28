@@ -75,6 +75,28 @@ test("marks tied read routes as clarify", () => {
   assert.equal(replay.ambiguous, true);
 });
 
+test("preserves source order for equal scores across double-digit candidate indices", () => {
+  const replay = replayRoute(loadFixture("fixtures/many-tied-routes.json"));
+  assert.equal(replay.selected.name, "route-2");
+  assert.equal(replay.ambiguous, true);
+  assert.equal(replay.approval, "clarify");
+  assert.deepEqual(replay.rejected.map(({ name }) => name), [
+    "route-3", "route-4", "route-5", "route-6", "route-7", "route-8", "route-9", "route-10", "route-11", "route-0", "route-1"
+  ]);
+});
+
+test("CLI reports the first highest-scoring candidate for a large tied fixture", () => {
+  const output = execFileSync("node", ["bin/connector-route-replay.js", "replay", "fixtures/many-tied-routes.json", "--format", "json"], {
+    encoding: "utf8"
+  });
+  const replay = JSON.parse(output);
+  assert.equal(replay.selected.name, "route-2");
+  assert.equal(replay.approval, "clarify");
+  assert.deepEqual(replay.rejected.map(({ name }) => name), [
+    "route-3", "route-4", "route-5", "route-6", "route-7", "route-8", "route-9", "route-10", "route-11", "route-0", "route-1"
+  ]);
+});
+
 test("parses simple YAML and avoids blocked live sender", () => {
   const replay = replayRoute(loadFixture("fixtures/blocked-route.yaml"), loadPolicy("examples/policy.json"));
   assert.equal(replay.selected.name, "mail.draft");
@@ -106,7 +128,7 @@ test("decodes quoted scalars in YAML fixture fields", () => {
 test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
   assert.equal(result.ok, true);
-  assert.equal(result.count, 6);
+  assert.equal(result.count, 7);
 });
 
 test("library rejects malformed fixture candidates with field-specific errors", (t) => {
