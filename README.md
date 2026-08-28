@@ -34,6 +34,8 @@ Fixtures are JSON by default. A small YAML subset is supported for simple scalar
 
 Each item in `candidates` must be an object with a non-empty string `name`, and every candidate name in a fixture must be unique. Names are compared exactly, without trimming or case folding. When present, `capabilities`, `sideEffects`, and `evidence` must be arrays of strings, and `dryRun` must be a boolean. Both `replay` and `verify` reject malformed or duplicate candidates before route scoring; duplicate-name errors identify both candidate numbers.
 
+Candidates are ordered by numeric score from highest to lowest. Equal scores preserve their order in the fixture: the first tied candidate is selected, every other candidate remains in deterministic fixture order in the rejected-route audit, and the tie still produces `clarify` approval.
+
 When present, `expected` must be an object. Its optional `selected` field is a non-empty route-name string, and its optional `approval` field is one of `none`, `clarify`, `explicit-approval`, or `blocked`. Both commands validate these assertions before scoring; malformed expectations are errors rather than verification mismatches.
 
 ```json
