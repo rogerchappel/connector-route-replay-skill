@@ -31,7 +31,7 @@ export function replayRoute(fixture, policy = DEFAULT_POLICY) {
   const normalizedPolicy = { ...DEFAULT_POLICY, ...policy };
   const scored = fixture.candidates
     .map((candidate, index) => scoreCandidate(candidate, fixture.request, normalizedPolicy, index))
-    .sort((a, b) => a.rankKey.localeCompare(b.rankKey));
+    .sort((a, b) => b.score - a.score || a.sourceIndex - b.sourceIndex);
   const available = scored.filter((candidate) => !candidate.blocked);
   const selected = available[0] ?? scored[0];
   const topScore = selected?.score ?? 0;
@@ -137,7 +137,7 @@ function scoreCandidate(candidate, request, policy, index) {
     ...candidate,
     score,
     blocked,
-    rankKey: `${String(9999 - score).padStart(4, "0")}:${index}`,
+    sourceIndex: index,
     evidence
   };
 }
