@@ -26,6 +26,8 @@ connector-route-replay verify fixtures --policy examples/policy.json
 
 `replay` scores one fixture and emits a report. `verify` scans a fixture directory, compares expected route and approval values, and exits non-zero on mismatch.
 
+Markdown reports keep fixture-derived values on one line and escape Markdown control characters. This preserves readable text while preventing request summaries, route names, evidence, or other fixture fields from creating headings, lists, links, or emphasis. JSON reports preserve the original fixture values unchanged.
+
 Invalid command lines exit with usage status `2` and print an actionable error plus usage text to stderr. This includes unknown options, extra positional arguments, repeated options, missing option values, and command-specific options such as `--format` on `verify`. Runtime and verification failures use status `1`.
 
 ## Fixture Shape
