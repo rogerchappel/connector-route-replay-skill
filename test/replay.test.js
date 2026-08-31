@@ -330,6 +330,56 @@ test("renders markdown report", () => {
   assert.match(markdown, /Tool: crm.search/);
 });
 
+test("markdown reports contain fixture-derived text without allowing Markdown structure", () => {
+  const fixture = {
+    id: "demo\n# forged heading",
+    request: {
+      summary: "Lookup *important* record\n## unexpected section",
+      intent: "read_[all]"
+    },
+    candidates: [
+      {
+        name: "crm.search\n- injected route",
+        capabilities: ["read_[all]"],
+        evidence: ["first line\n## unexpected evidence", "source: `fixture`"]
+      },
+      { name: "backup|route", capabilities: [] }
+    ]
+  };
+  const replay = replayRoute(fixture);
+  const markdown = renderReport(replay, "markdown");
+
+  assert.match(markdown, /^# Connector Route Replay: demo # forged heading$/m);
+  assert.match(markdown, /^Request: Lookup \\*important\\\* record ## unexpected section$/m);
+  assert.match(markdown, /^Intent: read\\_\\\[all\\\]$/m);
+  assert.match(markdown, /^- Tool: crm\.search - injected route$/m);
+  assert.match(markdown, /^- first line ## unexpected evidence$/m);
+  assert.match(markdown, /^- source: \\`fixture\\`$/m);
+  assert.match(markdown, /^- backup\\\|route: score 0$/m);
+  assert.equal(markdown.includes("\n## unexpected"), false);
+  assert.equal(renderReport(replay, "json"), `${JSON.stringify(replay, null, 2)}\n`);
+});
+
+test("CLI escapes request, route-name, and evidence fields in markdown output", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-markdown-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixturePath = path.join(dir, "report.json");
+  fs.writeFileSync(fixturePath, JSON.stringify({
+    id: "cli-report",
+    request: { summary: "Lookup\n# not a heading", intent: "read" },
+    candidates: [{ name: "crm_[search]", capabilities: ["read"], evidence: ["one\n- not a list item"] }]
+  }));
+
+  const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", fixturePath, "--format", "markdown"], {
+    encoding: "utf8"
+  });
+  assert.match(output, /^Request: Lookup # not a heading$/m);
+  assert.match(output, /^- Tool: crm\\_\\\[search\\\]$/m);
+  assert.match(output, /^- one - not a list item$/m);
+  assert.equal(output.includes("\n# not a heading"), false);
+  assert.equal(output.includes("\n- not a list item"), false);
+});
+
 test("CLI executes the documented markdown replay path", () => {
   const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", "fixtures/read-only-route.json", "--format", "markdown"], {
     encoding: "utf8"
