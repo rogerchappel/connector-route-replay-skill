@@ -82,15 +82,15 @@ export function renderReport(replay, format = "markdown") {
   if (format === "json") return `${JSON.stringify(replay, null, 2)}\n`;
   if (format !== "markdown") throw new Error(`Unsupported format: ${format}. Expected markdown or json`);
   const lines = [
-    `# Connector Route Replay: ${replay.id}`,
+    `# Connector Route Replay: ${markdownText(replay.id)}`,
     "",
-    `Request: ${replay.request.summary}`,
-    `Intent: ${replay.request.intent}`,
-    `Risk: ${replay.request.risk ?? "unspecified"}`,
+    `Request: ${markdownText(replay.request.summary)}`,
+    `Intent: ${markdownText(replay.request.intent)}`,
+    `Risk: ${markdownText(replay.request.risk ?? "unspecified")}`,
     "",
     "## Selected Route",
     "",
-    `- Tool: ${replay.selected?.name ?? "none"}`,
+    `- Tool: ${markdownText(replay.selected?.name ?? "none")}`,
     `- Score: ${replay.selected?.score ?? 0}`,
     `- Approval: ${replay.approval}`,
     `- Dry-run only: ${replay.dryRunOnly ? "yes" : "no"}`,
@@ -99,12 +99,19 @@ export function renderReport(replay, format = "markdown") {
     "## Evidence",
     ""
   ];
-  for (const item of replay.selected?.evidence ?? []) lines.push(`- ${item}`);
+  for (const item of replay.selected?.evidence ?? []) lines.push(`- ${markdownText(item)}`);
   lines.push("", "## Rejected Routes", "");
   for (const candidate of replay.rejected) {
-    lines.push(`- ${candidate.name}: score ${candidate.score}${candidate.blocked ? " (blocked)" : ""}`);
+    lines.push(`- ${markdownText(candidate.name)}: score ${candidate.score}${candidate.blocked ? " (blocked)" : ""}`);
   }
   return `${lines.join("\n")}\n`;
+}
+
+function markdownText(value) {
+  return String(value)
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/([\\`*_{}\[\]()<>#!|])/g, "\\$1");
 }
 
 function scoreCandidate(candidate, request, policy, index) {

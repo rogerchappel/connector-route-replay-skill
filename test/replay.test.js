@@ -349,12 +349,12 @@ test("markdown reports contain fixture-derived text without allowing Markdown st
   const replay = replayRoute(fixture);
   const markdown = renderReport(replay, "markdown");
 
-  assert.match(markdown, /^# Connector Route Replay: demo # forged heading$/m);
-  assert.match(markdown, /^Request: Lookup \\*important\\\* record ## unexpected section$/m);
-  assert.match(markdown, /^Intent: read\\_\\\[all\\\]$/m);
+  assert.equal(markdown.includes("# Connector Route Replay: demo \\# forged heading\n"), true);
+  assert.equal(markdown.includes("Request: Lookup \\*important\\* record \\#\\# unexpected section\n"), true);
+  assert.equal(markdown.includes("Intent: read\\_\\[all\\]\n"), true);
   assert.match(markdown, /^- Tool: crm\.search - injected route$/m);
-  assert.match(markdown, /^- first line ## unexpected evidence$/m);
-  assert.match(markdown, /^- source: \\`fixture\\`$/m);
+  assert.equal(markdown.includes("- first line \\#\\# unexpected evidence\n"), true);
+  assert.equal(markdown.includes("- source: \\`fixture\\`\n"), true);
   assert.match(markdown, /^- backup\\\|route: score 0$/m);
   assert.equal(markdown.includes("\n## unexpected"), false);
   assert.equal(renderReport(replay, "json"), `${JSON.stringify(replay, null, 2)}\n`);
@@ -373,7 +373,7 @@ test("CLI escapes request, route-name, and evidence fields in markdown output", 
   const output = execFileSync(process.execPath, ["bin/connector-route-replay.js", "replay", fixturePath, "--format", "markdown"], {
     encoding: "utf8"
   });
-  assert.match(output, /^Request: Lookup # not a heading$/m);
+  assert.match(output, /^Request: Lookup \\\# not a heading$/m);
   assert.match(output, /^- Tool: crm\\_\\\[search\\\]$/m);
   assert.match(output, /^- one - not a list item$/m);
   assert.equal(output.includes("\n# not a heading"), false);
