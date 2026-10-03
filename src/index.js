@@ -246,7 +246,8 @@ function parseSimpleYaml(text) {
   const lines = text.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#"));
   const root = {};
   const stack = [{ indent: -1, value: root }];
-  for (const raw of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const raw = lines[lineIndex];
     const indent = raw.match(/^ */)[0].length;
     const trimmed = raw.trim();
     while (stack.length > 1 && indent <= stack.at(-1).indent) stack.pop();
@@ -266,7 +267,7 @@ function parseSimpleYaml(text) {
     }
     const [key, value] = splitYamlPair(trimmed);
     if (value === "") {
-      const nextLine = lines[lines.indexOf(raw) + 1]?.trim() ?? "";
+      const nextLine = lines[lineIndex + 1]?.trim() ?? "";
       parent[key] = nextLine.startsWith("- ") ? [] : {};
       stack.push({ indent, value: parent[key] });
     } else {
