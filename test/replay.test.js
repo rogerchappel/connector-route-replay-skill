@@ -475,3 +475,31 @@ test("CLI rejects invalid argument forms with usage status and actionable stderr
     assert.match(result.stderr, /Usage:/, args.join(" "));
   }
 });
+
+test("parses repeated empty mappings from their positional next lines", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "route-replay-yaml-"));
+  const fixturePath = path.join(directory, "repeated.yaml");
+  fs.writeFileSync(fixturePath, [
+    "id: repeated",
+    "request:",
+    "  summary: repeated mappings",
+    "  intent: read",
+    "candidates:",
+    "  - name: first",
+    "    options:",
+    "      enabled: true",
+    "  - name: second",
+    "    options:",
+    "      - safe",
+    "      - deterministic",
+    "    score: 1",
+    ""
+  ].join("\n"));
+  try {
+    const fixture = loadFixture(fixturePath);
+    assert.deepEqual(fixture.candidates[0].options, { enabled: true });
+    assert.deepEqual(fixture.candidates[1].options, ["safe", "deterministic"]);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
