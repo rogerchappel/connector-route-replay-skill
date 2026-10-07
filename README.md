@@ -74,7 +74,7 @@ The fixture schema is validated before scoring:
 
 ## Policy Shape
 
-A policy file is a JSON object. All supported fields are optional and replace the corresponding default when supplied:
+A policy file is a JSON object. All supported fields are optional. `blockedTools` and `approvalRequiredIntents` replace their corresponding defaults when supplied; `dryRunRequiredSideEffects` adds to the built-in safeguards and cannot remove them:
 
 ```json
 {
@@ -92,7 +92,7 @@ Each policy field must be an array of strings. As with fixture arrays, empty str
 - Approval gates are explanatory, not a replacement for platform policy.
 - By default, any route with external writes, destructive actions, notification sends, or credential access requires approval and is marked `dryRunOnly`.
 - `dryRunOnly` routes are reported separately so agents can rehearse action plans before asking for access.
-- Custom policy objects are merged over the defaults. Omitted fields retain their default values; supplying an array such as `dryRunRequiredSideEffects` explicitly replaces that entire default array.
+- Custom policies cannot disable built-in dry-run side-effect safeguards. `dryRunRequiredSideEffects` overlays are additive; custom side effects extend the required set. Other policy fields retain their documented replacement behavior.
 
 ## Limitations
 

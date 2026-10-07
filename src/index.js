@@ -9,6 +9,7 @@ const DEFAULT_POLICY = {
   dryRunRequiredSideEffects: ["external-write", "notification-send", "destructive-change", "credential-access"]
 };
 const APPROVAL_VALUES = ["none", "clarify", "explicit-approval", "blocked"];
+const REQUIRED_SIDE_EFFECT_GUARDS = ["external-write", "notification-send", "destructive-change", "credential-access"];
 
 export function loadFixture(filePath) {
   const text = fs.readFileSync(filePath, "utf8");
@@ -22,13 +23,13 @@ export function loadPolicy(filePath) {
   if (!filePath) return DEFAULT_POLICY;
   const policy = JSON.parse(fs.readFileSync(filePath, "utf8"));
   validatePolicy(policy);
-  return { ...DEFAULT_POLICY, ...policy };
+  return mergePolicy(policy);
 }
 
 export function replayRoute(fixture, policy = DEFAULT_POLICY) {
   validateFixture(fixture, "replay input");
   validatePolicy(policy);
-  const normalizedPolicy = { ...DEFAULT_POLICY, ...policy };
+  const normalizedPolicy = mergePolicy(policy);
   const scored = fixture.candidates
     .map((candidate, index) => scoreCandidate(candidate, fixture.request, normalizedPolicy, index))
     .sort((a, b) => b.score - a.score || a.sourceIndex - b.sourceIndex);
@@ -211,6 +212,14 @@ function validateRequest(request, fixtureId) {
     throw new Error(`${label} request field risk must be a string`);
   }
   if (Object.hasOwn(request, "keywords")) validateStringArray(request.keywords, `${label} request field keywords`);
+}
+
+function mergePolicy(policy) {
+  return {
+    ...DEFAULT_POLICY,
+    ...policy,
+    dryRunRequiredSideEffects: [...new Set([...DEFAULT_POLICY.dryRunRequiredSideEffects, ...(policy.dryRunRequiredSideEffects ?? [])])]
+  };
 }
 
 function validatePolicy(policy) {
