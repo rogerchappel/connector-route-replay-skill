@@ -58,15 +58,28 @@ test("applies approval and dry-run gates according to route side effects", () =>
   }
 });
 
-test("custom policy merging preserves credential-access defaults unless explicitly replaced", () => {
+test("custom policy overlays cannot remove required side-effect safeguards", () => {
   const fixture = loadFixture("fixtures/credential-access-route.json");
   const mergedReplay = replayRoute(fixture, { blockedTools: ["unused.tool"] });
   assert.equal(mergedReplay.approval, "explicit-approval");
   assert.equal(mergedReplay.dryRunOnly, true);
 
-  const overriddenReplay = replayRoute(fixture, { dryRunRequiredSideEffects: ["external-write"] });
-  assert.equal(overriddenReplay.approval, "none");
-  assert.equal(overriddenReplay.dryRunOnly, false);
+  const extendedReplay = replayRoute(fixture, { dryRunRequiredSideEffects: ["custom-effect"] });
+  assert.equal(extendedReplay.approval, "explicit-approval");
+  assert.equal(extendedReplay.dryRunOnly, true);
+});
+
+test("loaded policy overlays retain all built-in side-effect safeguards", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "route-policy-"));
+  try {
+    const file = path.join(dir, "policy.json");
+    fs.writeFileSync(file, JSON.stringify({ dryRunRequiredSideEffects: ["custom-effect"] }));
+    const replay = replayRoute(loadFixture("fixtures/credential-access-route.json"), loadPolicy(file));
+    assert.equal(replay.approval, "explicit-approval");
+    assert.equal(replay.dryRunOnly, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("marks tied read routes as clarify", () => {
