@@ -142,6 +142,9 @@ test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
   assert.equal(result.ok, true);
   assert.equal(result.count, 7);
+  const tied = result.results.find(({ file }) => file === "many-tied-routes.json");
+  assert.equal(tied.ambiguous, true);
+  assert.equal(tied.ok, true);
 });
 
 test("library rejects malformed fixture candidates with field-specific errors", (t) => {
@@ -247,7 +250,8 @@ test("library rejects malformed expected fields before scoring", (t) => {
     [{ ...base, expected: { selected: "" } }, /Fixture invalid expected field selected must be a non-empty string/],
     [{ ...base, expected: { selected: false } }, /Fixture invalid expected field selected must be a non-empty string/],
     [{ ...base, expected: { approval: "sometimes" } }, /Fixture invalid expected field approval must be one of none, clarify, explicit-approval, blocked/],
-    [{ ...base, expected: { approval: true } }, /Fixture invalid expected field approval must be one of none, clarify, explicit-approval, blocked/]
+    [{ ...base, expected: { approval: true } }, /Fixture invalid expected field approval must be one of none, clarify, explicit-approval, blocked/],
+    [{ ...base, expected: { ambiguous: "yes" } }, /Fixture invalid expected field ambiguous must be a boolean/]
   ];
 
   for (const [fixture, message] of cases) {
@@ -256,6 +260,22 @@ test("library rejects malformed expected fields before scoring", (t) => {
     assert.throws(() => loadFixture(fixturePath), message);
     assert.throws(() => replayRoute(fixture), message);
   }
+});
+
+test("fixture verification fails when expected ambiguity is not met", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "connector-route-ambiguity-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const fixture = {
+    id: "expected-ambiguous",
+    request: { summary: "Find a record", intent: "read" },
+    candidates: [{ name: "first", capabilities: ["read"] }, { name: "second", capabilities: ["read"] }],
+    expected: { ambiguous: false, approval: "clarify" }
+  };
+  fs.writeFileSync(path.join(dir, "fixture.json"), JSON.stringify(fixture));
+  const result = verifyFixtures(dir);
+  assert.equal(result.ok, false);
+  assert.equal(result.results[0].ambiguous, true);
+  assert.equal(result.results[0].ok, false);
 });
 
 test("CLI replay and verify exit nonzero for malformed candidates", (t) => {
@@ -431,6 +451,7 @@ test("CLI replay and verify report decoded quoted YAML values", () => {
     id: "quoted-route",
     selected: "crm.search",
     approval: "none",
+    ambiguous: false,
     ok: true,
     expected: { selected: "crm.search", approval: "none" }
   });

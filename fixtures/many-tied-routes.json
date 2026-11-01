@@ -15,5 +15,5 @@
     { "name": "route-10", "capabilities": ["read"] },
     { "name": "route-11", "capabilities": ["read"] }
   ],
-  "expected": { "selected": "route-2", "approval": "clarify" }
+  "expected": { "selected": "route-2", "approval": "clarify", "ambiguous": true }
 }
