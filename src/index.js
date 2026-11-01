@@ -63,12 +63,14 @@ export function verifyFixtures(dirPath, options = {}) {
     const replay = replayRoute(fixture, policy);
     const selectedOk = !fixture.expected?.selected || fixture.expected.selected === replay.selected?.name;
     const approvalOk = !fixture.expected?.approval || fixture.expected.approval === replay.approval;
+    const ambiguousOk = !Object.hasOwn(fixture.expected ?? {}, "ambiguous") || fixture.expected.ambiguous === replay.ambiguous;
     return {
       file: name,
       id: fixture.id,
       selected: replay.selected?.name,
       approval: replay.approval,
-      ok: selectedOk && approvalOk,
+      ambiguous: replay.ambiguous,
+      ok: selectedOk && approvalOk && ambiguousOk,
       expected: fixture.expected ?? {}
     };
   });
@@ -195,6 +197,9 @@ function validateExpected(expected, fixtureId) {
   }
   if (Object.hasOwn(expected, "approval") && !APPROVAL_VALUES.includes(expected.approval)) {
     throw new Error(`${label} expected field approval must be one of ${APPROVAL_VALUES.join(", ")}`);
+  }
+  if (Object.hasOwn(expected, "ambiguous") && typeof expected.ambiguous !== "boolean") {
+    throw new Error(`${label} expected field ambiguous must be a boolean`);
   }
 }
 
