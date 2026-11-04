@@ -30,6 +30,10 @@ test("library parser rejects invalid argument forms deterministically", () => {
   }
 });
 
+test("package check validates every executable entrypoint", () => {
+  execFileSync("npm", ["run", "check"], { encoding: "utf8" });
+});
+
 test("selects read-only CRM route without approval", () => {
   const replay = replayRoute(loadFixture("fixtures/read-only-route.json"), loadPolicy("examples/policy.json"));
   assert.equal(replay.selected.name, "crm.search");
