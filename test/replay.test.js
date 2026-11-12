@@ -34,6 +34,16 @@ test("package check validates every executable entrypoint", () => {
   execFileSync("npm", ["run", "check"], { encoding: "utf8" });
 });
 
+test("package validation scripts remain wired into the release check", () => {
+  const { scripts, engines } = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(engines.node, ">=20");
+  assert.equal(scripts.check, "node --check bin/connector-route-replay.js && node --check src/index.js && node --check src/cli-args.js");
+  assert.equal(scripts.test, "node --test");
+  assert.equal(scripts.smoke, "node bin/connector-route-replay.js replay fixtures/read-only-route.json --format markdown && node bin/connector-route-replay.js verify fixtures --policy examples/policy.json");
+  assert.equal(scripts["package:smoke"], "node scripts/package-smoke.js");
+  assert.equal(scripts["release:check"], "npm run check && npm test && npm run smoke && npm run package:smoke");
+});
+
 test("selects read-only CRM route without approval", () => {
   const replay = replayRoute(loadFixture("fixtures/read-only-route.json"), loadPolicy("examples/policy.json"));
   assert.equal(replay.selected.name, "crm.search");
