@@ -7,6 +7,7 @@ import test from "node:test";
 import { CliUsageError, loadFixture, loadPolicy, parseCliArguments, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
 
 test("library parser returns command-specific arguments", () => {
+  assert.deepEqual(parseCliArguments(["schema"]), { command: "schema" });
   assert.deepEqual(
     parseCliArguments(["replay", "fixture.json", "--policy", "policy.json", "--format", "json"]),
     { command: "replay", target: "fixture.json", format: "json", policy: "policy.json" }
@@ -15,6 +16,14 @@ test("library parser returns command-specific arguments", () => {
     parseCliArguments(["verify", "fixtures", "--policy", "policy.json"]),
     { command: "verify", target: "fixtures", format: "markdown", policy: "policy.json" }
   );
+});
+
+test("fixture schema export is deterministic and valid JSON Schema shape", () => {
+  const schema = fs.readFileSync(new URL("../docs/fixture.schema.json", import.meta.url), "utf8");
+  const exported = execFileSync(process.execPath, ["bin/connector-route-replay.js", "schema"], { encoding: "utf8" });
+  assert.equal(exported, `${schema}\n`);
+  assert.deepEqual(JSON.parse(exported), JSON.parse(schema));
+  assert.equal(JSON.parse(schema).$schema, "https://json-schema.org/draft/2020-12/schema");
 });
 
 test("library parser rejects invalid argument forms deterministically", () => {

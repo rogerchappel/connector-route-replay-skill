@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rogerchappel/connector-route-replay-skill/blob/main/docs/fixture.schema.json",
+  "title": "Connector Route Replay fixture",
+  "type": "object",
+  "required": ["id", "request", "candidates"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "request": {
+      "type": "object",
+      "required": ["summary", "intent"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "intent": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "risk": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "sideEffects": { "type": "array", "items": { "type": "string" } },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "dryRun": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "expected": {
+      "type": "object",
+      "properties": {
+        "selected": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "approval": { "enum": ["none", "clarify", "explicit-approval", "blocked"] },
+        "ambiguous": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

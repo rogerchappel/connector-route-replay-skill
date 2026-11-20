@@ -1,4 +1,5 @@
 const COMMANDS = {
+  schema: new Set([]),
   replay: new Set(["--format", "--policy"]),
   verify: new Set(["--policy"])
 };
@@ -22,6 +23,10 @@ export function parseCliArguments(args) {
   if (command === "--version" || command === "-v" || command === "version") {
     rejectTrailingArguments(command, values);
     return { command: "version" };
+  }
+  if (command === "schema") {
+    rejectTrailingArguments(command, values);
+    return { command };
   }
   if (!COMMANDS[command]) throw new CliUsageError(`Unknown command: ${command}`);
 
