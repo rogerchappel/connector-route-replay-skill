@@ -14,4 +14,4 @@
 
 - [ ] Add richer policy overlays.
 - [ ] Emit SARIF-like policy findings.
-- [ ] Add fixture schema export.
+- [x] Add fixture schema export.

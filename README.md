@@ -10,6 +10,7 @@ This is a local-first agent skill. It does not call live connectors, read creden
 npm install
 npm test
 npm run smoke
+node bin/connector-route-replay.js schema
 node bin/connector-route-replay.js --help
 node bin/connector-route-replay.js --version
 node bin/connector-route-replay.js replay fixtures/write-action-route.json --format json
@@ -24,7 +25,7 @@ connector-route-replay replay fixtures/credential-access-route.json --format jso
 connector-route-replay verify fixtures --policy examples/policy.json
 ```
 
-`replay` scores one fixture and emits a report. `verify` scans a fixture directory, compares expected route and approval values, and exits non-zero on mismatch.
+`replay` scores one fixture and emits a report. `verify` scans a fixture directory, compares expected route and approval values, and exits non-zero on mismatch. `schema` prints the checked-in JSON Schema for fixture authors; run `npm run fixtures:schema` to reproduce the artifact.
 
 Markdown reports keep fixture-derived values on one line and escape Markdown control characters. This preserves readable text while preventing request summaries, route names, evidence, or other fixture fields from creating headings, lists, links, or emphasis. JSON reports preserve the original fixture values unchanged.
 

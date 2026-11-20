@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import fs from "node:fs";
 import { CliUsageError, loadFixture, loadPolicy, parseCliArguments, renderReport, replayRoute, verifyFixtures } from "../src/index.js";
 
 const args = process.argv.slice(2);
@@ -10,6 +11,8 @@ try {
     usage(undefined, 0);
   } else if (parsed.command === "version") {
     process.stdout.write(`connector-route-replay ${VERSION}\n`);
+  } else if (parsed.command === "schema") {
+    process.stdout.write(`${fs.readFileSync(new URL("../docs/fixture.schema.json", import.meta.url), "utf8")}\n`);
   } else if (parsed.command === "replay") {
     const fixture = loadFixture(parsed.target);
     const replay = replayRoute(fixture, loadPolicy(parsed.policy));
@@ -33,6 +36,7 @@ function usage(message, status = 2) {
   stream.write(`Usage:
   connector-route-replay replay <fixture> [--format markdown|json] [--policy policy.json]
   connector-route-replay verify <fixtures-dir> [--policy policy.json]
+  connector-route-replay schema
   connector-route-replay --help
   connector-route-replay --version
 `);
