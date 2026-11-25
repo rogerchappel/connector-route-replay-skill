@@ -1,0 +1,36 @@
+{
+  "id": "policy-overlay-route",
+  "request": {
+    "summary": "Export customer records",
+    "intent": "export",
+    "risk": "low"
+  },
+  "candidates": [
+    {
+      "name": "crm.legacy",
+      "capabilities": [
+        "export"
+      ],
+      "sideEffects": [
+        "bulk-export"
+      ],
+      "evidence": [
+        "Legacy integration"
+      ]
+    },
+    {
+      "name": "crm.export",
+      "capabilities": [
+        "export"
+      ],
+      "evidence": [
+        "Current integration"
+      ]
+    }
+  ],
+  "expected": {
+    "selected": "crm.export",
+    "approval": "explicit-approval",
+    "ambiguous": false
+  }
+}

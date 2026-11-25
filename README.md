@@ -85,7 +85,7 @@ A policy file is a JSON object. All supported fields are optional. `blockedTools
 }
 ```
 
-Each policy field must be an array of strings. As with fixture arrays, empty strings are accepted and compared literally without coercion. The library entry points and the `replay` and `verify` CLI commands reject invalid fixture or policy fields before scoring, with the invalid field named in the error.
+Each policy field must be an array of strings. As with fixture arrays, empty strings are accepted and compared literally without coercion. The library entry points and the `replay` and `verify` CLI commands reject invalid fixture or policy fields before scoring, with the invalid field named in the error. `examples/policy-overlay.json` demonstrates adding a required-approval intent and dry-run side effect while blocking a legacy route; `fixtures/policy-overlay-route.json` verifies the changed route classification.
 
 ## Safety Notes
 

@@ -48,7 +48,7 @@ test("package validation scripts remain wired into the release check", () => {
   assert.equal(engines.node, ">=20");
   assert.equal(scripts.check, "node --check bin/connector-route-replay.js && node --check src/index.js && node --check src/cli-args.js");
   assert.equal(scripts.test, "node --test");
-  assert.equal(scripts.smoke, "node bin/connector-route-replay.js replay fixtures/read-only-route.json --format markdown && node bin/connector-route-replay.js verify fixtures --policy examples/policy.json");
+  assert.equal(scripts.smoke, "node bin/connector-route-replay.js replay fixtures/read-only-route.json --format markdown && node bin/connector-route-replay.js verify fixtures --policy examples/policy-overlay.json");
   assert.equal(scripts["package:smoke"], "node scripts/package-smoke.js");
   assert.equal(scripts["release:check"], "npm run check && npm test && npm run smoke && npm run package:smoke");
 });
@@ -103,6 +103,23 @@ test("loaded policy overlays retain all built-in side-effect safeguards", () => 
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("policy overlay changes fixture classification and keeps mandatory safeguards", () => {
+  const fixture = loadFixture("fixtures/policy-overlay-route.json");
+  const policy = loadPolicy("examples/policy-overlay.json");
+  const replay = replayRoute(fixture, policy);
+  assert.equal(replay.selected.name, "crm.export");
+  assert.equal(replay.rejected.find(({ name }) => name === "crm.legacy").blocked, true);
+  assert.equal(replay.approval, "explicit-approval");
+  assert.equal(replay.dryRunOnly, false);
+
+  const overlay = replayRoute({
+    id: "bulk-export", request: { summary: "Export", intent: "read" },
+    candidates: [{ name: "export", sideEffects: ["bulk-export"] }]
+  }, policy);
+  assert.equal(overlay.approval, "explicit-approval");
+  assert.equal(overlay.dryRunOnly, true);
 });
 
 test("marks tied read routes as clarify", () => {
@@ -162,9 +179,11 @@ test("decodes quoted scalars in YAML fixture fields", () => {
 });
 
 test("verifies all bundled fixtures", () => {
-  const result = verifyFixtures("fixtures", { policy: "examples/policy.json" });
+  const result = verifyFixtures("fixtures", { policy: "examples/policy-overlay.json" });
   assert.equal(result.ok, true);
-  assert.equal(result.count, 7);
+  assert.equal(result.count, 8);
+  const overlay = verifyFixtures("fixtures", { policy: "examples/policy-overlay.json" });
+  assert.equal(overlay.ok, true);
   const tied = result.results.find(({ file }) => file === "many-tied-routes.json");
   assert.equal(tied.ambiguous, true);
   assert.equal(tied.ok, true);
@@ -464,7 +483,7 @@ test("CLI replay and verify report decoded quoted YAML values", () => {
   assert.deepEqual(replay.selected.evidence.slice(0, 2), ["source: local fixture", "Uses: the customer's identifier"]);
   assert.equal(replay.expected.approval, "none");
 
-  const verifyOutput = execFileSync(process.execPath, ["bin/connector-route-replay.js", "verify", "fixtures", "--policy", "examples/policy.json"], {
+  const verifyOutput = execFileSync(process.execPath, ["bin/connector-route-replay.js", "verify", "fixtures", "--policy", "examples/policy-overlay.json"], {
     encoding: "utf8"
   });
   const verify = JSON.parse(verifyOutput);
