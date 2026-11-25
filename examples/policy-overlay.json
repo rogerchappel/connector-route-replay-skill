@@ -1,0 +1,5 @@
+{
+  "blockedTools": ["crm.legacy", "mail.send.live"],
+  "approvalRequiredIntents": ["write", "delete", "publish", "export"],
+  "dryRunRequiredSideEffects": ["bulk-export"]
+}
