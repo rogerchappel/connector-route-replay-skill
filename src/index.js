@@ -281,8 +281,10 @@ function parseSimpleYaml(text) {
     }
     const [key, value] = splitYamlPair(trimmed);
     if (value === "") {
-      const nextLine = lines[lineIndex + 1]?.trim() ?? "";
-      parent[key] = nextLine.startsWith("- ") ? [] : {};
+      const nextLine = lines[lineIndex + 1];
+      const nextTrimmed = nextLine?.trim() ?? "";
+      const nextIndent = nextLine?.match(/^ */)[0].length ?? -1;
+      parent[key] = nextIndent > indent && nextTrimmed.startsWith("- ") ? [] : {};
       stack.push({ indent, value: parent[key] });
     } else {
       parent[key] = coerceYaml(value);
