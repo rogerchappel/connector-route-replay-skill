@@ -178,6 +178,17 @@ test("decodes quoted scalars in YAML fixture fields", () => {
   assert.equal(replay.approval, "none");
 });
 
+test("parses an empty mapping followed by a scalar child", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "route-replay-yaml-"));
+  const file = path.join(dir, "fixture.yaml");
+  try {
+    fs.writeFileSync(file, "id: yaml-scalar-child\nmetadata:\n  label: retained\nrequest:\n  summary: test\n  intent: read\ncandidates:\n  - name: crm.search\n");
+    assert.equal(loadFixture(file).metadata.label, "retained");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("verifies all bundled fixtures", () => {
   const result = verifyFixtures("fixtures", { policy: "examples/policy-overlay.json" });
   assert.equal(result.ok, true);
